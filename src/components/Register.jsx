@@ -1,277 +1,207 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { register as registerUser } from "../Api/AuthService";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { register as registerApi } from "../../Api/AuthService";
+import { useContext } from "react";
+import { AuthContext } from "./AuthContext";
+const registerSchema = yup.object().shape({
+  nom: yup
+    .string()
+    .required("Le nom est obligatoire")
+    .min(2, "Le nom doit contenir au moins 2 caractères")
+    .max(50, "Le nom ne peut pas dépasser 50 caractères"),
 
-const Register = () => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [isSubmittingState, setIsSubmittingState] = useState(false);
+  prenom: yup
+    .string()
+    .required("Le prénom est obligatoire")
+    .min(2, "Le prénom doit contenir au moins 2 caractères")
+    .max(50, "Le prénom ne peut pas dépasser 50 caractères"),
 
-  const navigate = useNavigate();
+  email: yup
+    .string()
+    .required("L'email est obligatoire")
+    .email("Le format de l'email est invalide"),
+
+  password: yup
+    .string()
+    .required("Le mot de passe est obligatoire")
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+
+  role: yup
+    .string()
+    .required("Le rôle est obligatoire")
+    .oneOf(["ADMIN", "MANAGER", "AGENT"], "Rôle invalide"),
+});
+
+function Register() {
+  const [apiError, setApiError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const { login, error, token } = useContext(AuthContext);
 
   const {
     register,
     handleSubmit,
-    watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
+    reset,
   } = useForm({
+    resolver: yupResolver(registerSchema),
     defaultValues: {
-      username: "",
+      nom: "",
+      prenom: "",
       email: "",
-      role: "patient",
       password: "",
-      confirmPassword: "",
+      role: "AGENT",
     },
   });
 
-  const passwordValue = watch("password");
+  const onSubmit = async (data) => {
+    setApiError(null);
+    setSuccessMessage(null);
 
-  const onSubmit = (data) => {
-    setError("");
-    setSuccess("");
-    setIsSubmittingState(true);
-
-    const nouveauPatient = {
-      username: data.username,
-      email: data.email,
-      password: data.password,
-      role: "patient",
-    };
-
-    registerUser(
-      nouveauPatient.username,
-      nouveauPatient.email,
-      nouveauPatient.password,
-      nouveauPatient.role,
-    )
-      .then((response) => {
-        console.log("Patient inscrit avec succès :", response);
-        setSuccess(
-          "Inscription réussie ! Redirection vers la page de connexion...",
-        );
-
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
-      })
-      .catch((err) => {
-        console.error("Erreur d'inscription :", err);
-        setError(
-          err.message || "Une erreur est survenue lors de l'inscription.",
-        );
-      })
-      .finally(() => {
-        setIsSubmittingState(false);
-      });
+    try {
+      await registerApi(
+        data.nom,
+        data.prenom,
+        data.email,
+        data.password,
+        data.role,
+      );
+      setSuccessMessage("Inscription réussie !");
+      reset();
+    } catch (err) {
+      setApiError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Erreur lors de l'inscription.",
+      );
+    }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>HealthCare+</h2>
-        <p style={styles.subtitle}>Créer un nouveau compte personnel médical</p>
+    <div className="max-w-md mx-auto my-8 p-6 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
+      <h2 className="text-2xl font-bold text-gray-800 text-center">
+        Inscription
+      </h2>
 
-        {error && <div style={styles.errorAlert}>{error}</div>}
-        {success && <div style={styles.successAlert}>{success}</div>}
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Nom complet */}
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Nom complet</label>
-            <input
-              type="text"
-              {...register("username", {
-                required: "Le nom complet est requis",
-              })}
-              style={styles.input}
-              placeholder="Dr. Jean Dupont"
-            />
-            {errors.username && (
-              <span style={styles.errorText}>{errors.username.message}</span>
-            )}
-          </div>
-
-          {/* Adresse Email */}
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Adresse Email</label>
-            <input
-              type="email"
-              {...register("email", {
-                required: "L'adresse email est requise",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Adresse email invalide",
-                },
-              })}
-              style={styles.input}
-              placeholder="jean.dupont@healthcare.com"
-            />
-            {errors.email && (
-              <span style={styles.errorText}>{errors.email.message}</span>
-            )}
-          </div>
-
-          {/* Mot de passe */}
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Mot de passe</label>
-            <input
-              type="password"
-              {...register("password", {
-                required: "Le mot de passe est requis",
-                minLength: {
-                  value: 6,
-                  message:
-                    "Le mot de passe doit contenir au moins 6 caractères",
-                },
-              })}
-              style={styles.input}
-              placeholder="••••••••"
-            />
-            {errors.password && (
-              <span style={styles.errorText}>{errors.password.message}</span>
-            )}
-          </div>
-
-          {/* Confirmer le mot de passe */}
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Confirmer le mot de passe</label>
-            <input
-              type="password"
-              {...register("confirmPassword", {
-                required: "Veuillez confirmer votre mot de passe",
-                validate: (value) =>
-                  value === passwordValue ||
-                  "Les mots de passe ne correspondent pas.",
-              })}
-              style={styles.input}
-              placeholder="••••••••"
-            />
-            {errors.confirmPassword && (
-              <span style={styles.errorText}>
-                {errors.confirmPassword.message}
-              </span>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmittingState}
-            style={
-              isSubmittingState
-                ? { ...styles.button, opacity: 0.7, cursor: "not-allowed" }
-                : styles.button
-            }
-          >
-            {isSubmittingState ? "Inscription..." : "S'inscrire"}
-          </button>
-        </form>
-
-        <p style={styles.footerText}>
-          Déjà un compte ?{" "}
-          <span onClick={() => navigate("/login")} style={styles.link}>
-            Se connecter
-          </span>
+      {apiError && (
+        <p className="p-2 bg-red-50 text-red-600 text-sm rounded border border-red-200">
+          {apiError}
         </p>
-      </div>
+      )}
+      {successMessage && (
+        <p className="p-2 bg-green-50 text-green-600 text-sm rounded border border-green-200">
+          {successMessage}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <label
+            htmlFor="nom"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Nom
+          </label>
+          <input
+            id="nom"
+            type="text"
+            {...register("nom")}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+          {errors.nom && (
+            <p className="text-red-500 text-sm mt-1">{errors.nom.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="prenom"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Prénom
+          </label>
+          <input
+            id="prenom"
+            type="text"
+            {...register("prenom")}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+          {errors.prenom && (
+            <p className="text-red-500 text-sm mt-1">{errors.prenom.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            {...register("email")}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Mot de passe
+          </label>
+          <input
+            id="password"
+            type="password"
+            {...register("password")}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="role"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Rôle
+          </label>
+          <select
+            id="role"
+            {...register("role")}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+          >
+            <option value="AGENT">AGENT</option>
+            <option value="MANAGER">MANAGER</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+          {errors.role && (
+            <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors disabled:opacity-50"
+        >
+          {isSubmitting ? "Inscription en cours..." : "S'inscrire"}
+        </button>
+      </form>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "100vh",
-    backgroundColor: "#f0f4f8",
-    padding: "20px 0",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "400px",
-    padding: "2.5rem",
-    borderRadius: "8px",
-    backgroundColor: "#ffffff",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-  },
-  title: {
-    textAlign: "center",
-    color: "#0056b3",
-    marginBottom: "0.5rem",
-    fontSize: "2rem",
-    fontWeight: "700",
-  },
-  subtitle: {
-    textAlign: "center",
-    color: "#6c757d",
-    marginBottom: "2rem",
-    fontSize: "0.95rem",
-  },
-  inputGroup: { marginBottom: "1.25rem" },
-  label: {
-    display: "block",
-    marginBottom: "0.5rem",
-    color: "#495057",
-    fontSize: "0.9rem",
-    fontWeight: "500",
-  },
-  input: {
-    width: "100%",
-    padding: "0.75rem",
-    borderRadius: "4px",
-    border: "1px solid #ced4da",
-    fontSize: "1rem",
-    boxSizing: "border-box",
-  },
-  button: {
-    width: "100%",
-    padding: "0.75rem",
-    border: "none",
-    borderRadius: "4px",
-    backgroundColor: "#0056b3",
-    color: "#fff",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    marginTop: "0.5rem",
-  },
-  errorAlert: {
-    padding: "0.75rem",
-    marginBottom: "1.5rem",
-    backgroundColor: "#f8d7da",
-    color: "#721c24",
-    border: "1px solid #f5c6cb",
-    borderRadius: "4px",
-    fontSize: "0.9rem",
-  },
-  successAlert: {
-    padding: "0.75rem",
-    marginBottom: "1.5rem",
-    backgroundColor: "#d4edda",
-    color: "#155724",
-    border: "1px solid #c3e6cb",
-    borderRadius: "4px",
-    fontSize: "0.9rem",
-  },
-  errorText: {
-    display: "block",
-    color: "#dc3545",
-    fontSize: "0.8rem",
-    marginTop: "0.25rem",
-  },
-  footerText: {
-    textAlign: "center",
-    marginTop: "1.5rem",
-    fontSize: "0.9rem",
-    color: "#6c757d",
-  },
-  link: {
-    color: "#0056b3",
-    fontWeight: "600",
-    cursor: "pointer",
-    textDecoration: "underline",
-  },
-};
+}
 
 export default Register;

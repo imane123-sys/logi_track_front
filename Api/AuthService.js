@@ -1,15 +1,14 @@
 import connexion from "./Connexion";
-//envoyer requete POST
 export const login = async (email, password) => {
-  return connexion.post("/auth/login", {
+  return connexion.post("/api/auth/login", {
     email,
     password,
   });
 };
-export const register = async (username, email, password, role) => {
-  console.log(role);
-  const response = await connexion.post("/auth/register", {
-    username,
+export const register = async (nom, prenom, email, password, role) => {
+  const response = await connexion.post("/api/auth/register", {
+    nom,
+    prenom,
     email,
     password,
     role,

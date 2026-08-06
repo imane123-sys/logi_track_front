@@ -10,7 +10,7 @@ const connexion = axios.create({
 
 connexion.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("hc_token");
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -38,8 +38,8 @@ connexion.interceptors.response.use(
           console.warn(
             "[401 Unauthorized]: Session expirée. Nettoyage et redirection...",
           );
-          localStorage.removeItem("hc_token");
-          localStorage.removeItem("hc_user");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
           window.location.href = "/login";
           break;
         case 403:

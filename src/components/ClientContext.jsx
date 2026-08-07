@@ -57,6 +57,22 @@ export function ClientProvider({ children }) {
     }
   };
 
+  const updateClient = async (id, clientData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await clientApi.update(id, clientData);
+      await fetchClients();
+      return true;
+    } catch (err) {
+      console.error("Error updating client:", err);
+      setError(err?.response?.data?.message || "Failed to update client.");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchClients();
   }, []);
@@ -69,6 +85,7 @@ export function ClientProvider({ children }) {
         error,
         fetchClients,
         addClient,
+        updateClient,
         deleteClient,
       }}
     >

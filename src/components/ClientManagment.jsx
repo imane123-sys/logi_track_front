@@ -1,15 +1,36 @@
 import React, { useState, useContext } from "react";
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  TextField,
+  CircularProgress,
+  Alert,
+  Chip,
+  Box,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+} from "@mui/material";
 import { ClientContext } from "./ClientContext";
 
 export default function ClientManagement({ canDelete = true }) {
-  const { clients, loading, error, addClient, deleteClient } =
+  const { clients, loading, error, addClient, updateClient, deleteClient } =
     useContext(ClientContext);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [editingClient, setEditingClient] = useState(null);
 
-  // Added 'prenom' to form state to match Spring Boot User entity
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -22,12 +43,36 @@ export default function ClientManagement({ canDelete = true }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleOpenAdd = () => {
+    setEditingClient(null);
+    setFormData({ nom: "", prenom: "", email: "", telephone: "", ville: "" });
+    setShowAddModal(true);
+  };
+
+  const handleOpenEdit = (client) => {
+    setEditingClient(client);
+    setFormData({
+      nom: client.nom || "",
+      prenom: client.prenom || "",
+      email: client.email || "",
+      telephone: client.telephone || "",
+      ville: client.ville || "",
+    });
+    setShowAddModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await addClient(formData);
+    let success = false;
+    if (editingClient) {
+      success = await updateClient(editingClient.id, formData);
+    } else {
+      success = await addClient(formData);
+    }
     if (success) {
       setFormData({ nom: "", prenom: "", email: "", telephone: "", ville: "" });
       setShowAddModal(false);
+      setEditingClient(null);
     }
   };
 
@@ -37,7 +82,6 @@ export default function ClientManagement({ canDelete = true }) {
     }
   };
 
-  // Updated to also search by prenom
   const filteredClients = (clients || []).filter(
     (c) =>
       c.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,336 +91,248 @@ export default function ClientManagement({ canDelete = true }) {
   );
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <Box sx={{ maxWidth: 1100, mx: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-5">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: 1,
+          borderColor: "divider",
+          pb: 2,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" fontWeight="bold">
             Gestion des Clients
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gérez vos clients, consultez leurs détails et ajoutez de nouvelles
-            entrées.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg shadow-sm transition-colors cursor-pointer"
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Gérez vos clients, consultez leurs détails et ajoutez de nouvelles entrées.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={handleOpenAdd}
+          sx={{
+            bgcolor: "#4f46e5",
+            "&:hover": { bgcolor: "#4338ca" },
+            textTransform: "none",
+            borderRadius: 2,
+          }}
         >
           + Nouveau Client
-        </button>
-      </div>
+        </Button>
+      </Box>
 
-      {/* Error Alert */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        <Alert severity="error">
           {error}
-        </div>
+        </Alert>
       )}
 
-      {/* Search & Counter */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Rechercher par nom, prénom, email, ville..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all"
-          />
-        </div>
-        <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-          Total: {filteredClients.length}
-        </span>
-      </div>
+      {/* Search & Counter Bar */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+        <TextField
+          placeholder="Rechercher par nom, prénom, email, ville..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          size="small"
+          sx={{ flexGrow: 1, maxWidth: 450 }}
+        />
+        <Chip
+          label={`Total: ${filteredClients.length}`}
+          sx={{ fontWeight: "bold", bgcolor: "#f3f4f6", color: "#4b5563" }}
+        />
+      </Box>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Table Section */}
+      <TableContainer component={Paper} variant="outlined">
         {loading ? (
-          <div className="p-12 text-center text-gray-500 text-sm">
-            <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mb-2"></div>
-            <p>Chargement des clients...</p>
-          </div>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
+            <CircularProgress />
+          </Box>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50 text-xs text-gray-700 uppercase font-semibold border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3.5">ID</th>
-                  <th className="px-6 py-3.5">Nom</th>
-                  <th className="px-6 py-3.5">Prénom</th>
-                  <th className="px-6 py-3.5">Email</th>
-                  <th className="px-6 py-3.5">Téléphone</th>
-                  <th className="px-6 py-3.5">Ville</th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredClients.length > 0 ? (
-                  filteredClients.map((client) => (
-                    <tr
-                      key={client.id}
-                      className="hover:bg-gray-50/80 transition-colors"
-                    >
-                      <td className="px-6 py-4 font-mono text-xs text-gray-500">
-                        #{client.id}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-gray-900">
-                        {client.nom}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {client.prenom}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {client.email}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {client.telephone}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {client.ville}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <button
+          <Table>
+            <TableHead sx={{ bgcolor: "#f9fafb" }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>ID</TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Nom</TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Prénom</TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Téléphone</TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Ville</TableCell>
+                <TableCell align="right" sx={{ fontWeight: "bold", color: "#374151" }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredClients.length > 0 ? (
+                filteredClients.map((client) => (
+                  <TableRow key={client.id} hover>
+                    <TableCell sx={{ fontFamily: "monospace" }}>#{client.id}</TableCell>
+                    <TableCell sx={{ fontWeight: "medium" }}>{client.nom}</TableCell>
+                    <TableCell>{client.prenom}</TableCell>
+                    <TableCell>{client.telephone}</TableCell>
+                    <TableCell>
+                      <Chip label={client.ville} size="small" variant="outlined" />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                        <Button
+                          size="small"
                           onClick={() => setSelectedClient(client)}
-                          className="inline-flex items-center text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-2.5 py-1 rounded transition-colors cursor-pointer"
+                          sx={{ color: "#4f46e5", "&:hover": { bgcolor: "#f5f3ff" }, textTransform: "none" }}
                         >
                           Voir
-                        </button>
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() => handleOpenEdit(client)}
+                          sx={{ color: "#d97706", "&:hover": { bgcolor: "#fef3c7" }, textTransform: "none" }}
+                        >
+                          Modifier
+                        </Button>
                         {canDelete && (
-                          <button
+                          <Button
+                            size="small"
+                            color="error"
                             onClick={() => handleDelete(client.id)}
-                            className="inline-flex items-center text-xs font-medium text-red-600 hover:text-red-800 hover:bg-red-50 px-2.5 py-1 rounded transition-colors cursor-pointer"
+                            sx={{ "&:hover": { bgcolor: "#fef2f2" }, textTransform: "none" }}
                           >
                             Supprimer
-                          </button>
+                          </Button>
                         )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-6 py-12 text-center text-gray-400"
-                    >
-                      Aucun client trouvé.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.disabled" }}>
+                    Aucun client trouvé.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         )}
-      </div>
+      </TableContainer>
 
-      {/* MODAL 1: Voir Détails Client */}
+      {/* Dialog 1: Voir Détails */}
       {selectedClient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Détails du Client #{selectedClient.id}
-              </h3>
-              <button
-                onClick={() => setSelectedClient(null)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-medium cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="block text-xs font-semibold text-gray-400 uppercase">
-                    Nom
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    {selectedClient.nom}
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-xs font-semibold text-gray-400 uppercase">
-                    Prénom
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    {selectedClient.prenom}
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-xs font-semibold text-gray-400 uppercase">
-                    Email
-                  </span>
-                  <span className="text-gray-700">{selectedClient.email}</span>
-                </div>
-                <div>
-                  <span className="block text-xs font-semibold text-gray-400 uppercase">
-                    Téléphone
-                  </span>
-                  <span className="text-gray-700">
-                    {selectedClient.telephone}
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-xs font-semibold text-gray-400 uppercase">
-                    Ville
-                  </span>
-                  <span className="text-gray-700">{selectedClient.ville}</span>
-                </div>
-              </div>
+        <Dialog open={!!selectedClient} onClose={() => setSelectedClient(null)} maxWidth="sm" fullWidth>
+          <DialogTitle>Détails du Client #{selectedClient.id}</DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, mb: 2 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">NOM</Typography>
+                <Typography variant="body1">{selectedClient.nom || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">PRÉNOM</Typography>
+                <Typography variant="body1">{selectedClient.prenom || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">EMAIL</Typography>
+                <Typography variant="body1">{selectedClient.email || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">TÉLÉPHONE</Typography>
+                <Typography variant="body1">{selectedClient.telephone || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">VILLE</Typography>
+                <Typography variant="body1">{selectedClient.ville || "-"}</Typography>
+              </Box>
+            </Box>
 
-              <div className="pt-4 border-t border-gray-100">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase mb-2">
-                  Commandes associées
-                </h4>
-                {selectedClient.commandes &&
-                selectedClient.commandes.length > 0 ? (
-                  <ul className="divide-y divide-gray-100 max-h-40 overflow-y-auto">
-                    {selectedClient.commandes.map((cmd) => (
-                      <li
-                        key={cmd.id}
-                        className="py-2 text-xs flex justify-between"
-                      >
-                        <span>Commande #{cmd.id}</span>
-                        <span className="text-gray-500">
-                          {cmd.statut || "En cours"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-xs text-gray-400">
-                    Aucune commande enregistrée pour ce client.
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button
-                onClick={() => setSelectedClient(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
+            <Divider sx={{ my: 2 }} />
+            
+            <Typography variant="caption" color="text.secondary" fontWeight="bold" display="block" sx={{ mb: 1 }}>
+              COMMANDES ASSOCIÉES
+            </Typography>
+            {selectedClient.commandes && selectedClient.commandes.length > 0 ? (
+              <Box component="ul" sx={{ m: 0, p: 0, listStyle: "none", maxHeight: 150, overflowY: "auto" }}>
+                {selectedClient.commandes.map((cmd) => (
+                  <Box component="li" key={cmd.id} sx={{ py: 1, display: "flex", justifyContent: "space-between", borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="body2">Commande #{cmd.id}</Typography>
+                    <Typography variant="body2" color="text.secondary">{cmd.statut || "En cours"}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            ) : (
+              <Typography variant="body2" color="text.secondary">Aucune commande enregistrée pour ce client.</Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setSelectedClient(null)} color="primary">Fermer</Button>
+          </DialogActions>
+        </Dialog>
       )}
 
-      {/* MODAL 2: Ajouter un Client */}
+      {/* Dialog 2: Ajouter/Modifier un Client */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-100">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Ajouter un Client
-              </h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-medium cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-                    Nom
-                  </label>
-                  <input
-                    type="text"
-                    name="nom"
-                    value={formData.nom}
-                    onChange={handleChange}
-                    required
-                    placeholder="ex: Dupont"
-                    className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-                    Prénom
-                  </label>
-                  <input
-                    type="text"
-                    name="prenom"
-                    value={formData.prenom}
-                    onChange={handleChange}
-                    required
-                    placeholder="ex: Jean"
-                    className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
+        <Dialog open={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>{editingClient ? "Modifier le Client" : "Ajouter un Client"}</DialogTitle>
+          <form onSubmit={handleSubmit}>
+            <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <TextField
+                  label="Nom"
+                  name="nom"
+                  value={formData.nom}
                   onChange={handleChange}
                   required
-                  placeholder="ex: jean.dupont@example.com"
-                  className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  size="small"
+                  fullWidth
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-                  Téléphone
-                </label>
-                <input
-                  type="text"
-                  name="telephone"
-                  value={formData.telephone}
+                <TextField
+                  label="Prénom"
+                  name="prenom"
+                  value={formData.prenom}
                   onChange={handleChange}
                   required
-                  placeholder="ex: 0612345678"
-                  className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  size="small"
+                  fullWidth
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-                  Ville
-                </label>
-                <input
-                  type="text"
-                  name="ville"
-                  value={formData.ville}
-                  onChange={handleChange}
-                  required
-                  placeholder="ex: Paris"
-                  className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
-                >
-                  {loading ? "Enregistrement..." : "Enregistrer"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+              </Box>
+              <TextField
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label="Téléphone"
+                name="telephone"
+                value={formData.telephone}
+                onChange={handleChange}
+                required
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label="Ville"
+                name="ville"
+                value={formData.ville}
+                onChange={handleChange}
+                required
+                size="small"
+                fullWidth
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowAddModal(false)} color="inherit">Annuler</Button>
+              <Button type="submit" variant="contained" disabled={loading} sx={{ bgcolor: "#4f46e5", "&:hover": { bgcolor: "#4338ca" } }}>
+                {loading ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
       )}
-    </div>
+    </Box>
   );
 }

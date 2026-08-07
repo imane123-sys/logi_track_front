@@ -3,6 +3,7 @@ import "./App.css";
 import Register from "./components/Register";
 import Login from "./components/Login";
 import ClientManagement from "./components/ClientManagment";
+import Products from "./components/Products";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Register />
       <Login />
       <ClientManagement />
+      <Products />
     </>
   );
 }

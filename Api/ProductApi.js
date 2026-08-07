@@ -6,6 +6,5 @@ export const productApi = {
   create: (data) => connexion.post("/api/products", data),
   update: (id, data) => connexion.put(`/api/products/${id}`, data),
   delete: (id) => connexion.delete(`/api/products/${id}`),
-  findByPrix: (prix) =>
-    connexion.get(`api/products/findProduitParPrix/${prix}`),
+  findByPrix: (prix) => connexion.get(`/api/products/findProduitParPrix/${prix}`),
 };

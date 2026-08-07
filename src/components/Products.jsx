@@ -1,3 +1,4 @@
+//Docker a ajouter , Swagger Backend
 import { useState, useEffect, useContext } from "react";
 import {
   Paper,
@@ -27,7 +28,6 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search,setSearch]=useState(null);
 
   const [categorySearch, setCategorySearch] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -54,6 +54,7 @@ export default function Products() {
     fetchProducts();
   }, []);
 
+
   const hasRole = (role) => {
     if (!user || !user.role) return false;
     const roles = Array.isArray(user.role) ? user.role : [user.role];
@@ -61,7 +62,7 @@ export default function Products() {
       (r) =>
         typeof r === "string" &&
         (r.toUpperCase() === role.toUpperCase() ||
-         r.toUpperCase() === `ROLE_${role.toUpperCase()}`)
+          r.toUpperCase() === `ROLE_${role.toUpperCase()}`),
     );
   };
 
@@ -76,9 +77,17 @@ export default function Products() {
       : true;
 
     const price = p.prix !== undefined && p.prix !== null ? Number(p.prix) : 0;
-    const matchMaxPrice = maxPrice === "" || isNaN(Number(maxPrice)) ? true : price <= Number(maxPrice);
+    const matchMaxPrice =
+      maxPrice === "" || isNaN(Number(maxPrice))
+        ? true
+        : price <= Number(maxPrice);
 
-    const stock = p.stock !== undefined && p.stock !== null ? Number(p.stock) : (p.quantiteStock !== undefined && p.quantiteStock !== null ? Number(p.quantiteStock) : 0);
+    const stock =
+      p.stock !== undefined && p.stock !== null
+        ? Number(p.stock)
+        : p.quantiteStock !== undefined && p.quantiteStock !== null
+          ? Number(p.quantiteStock)
+          : 0;
     const matchLowStock = onlyLowStock ? stock <= STOCK_FAIBLE : true;
 
     return matchCategory && matchMaxPrice && matchLowStock;
@@ -123,7 +132,16 @@ export default function Products() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box
+      sx={{
+        maxWidth: 1100,
+        mx: "auto",
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
+    >
       <Box
         sx={{
           display: "flex",
@@ -158,11 +176,7 @@ export default function Products() {
         )}
       </Box>
 
-      {error && (
-        <Alert severity="error">
-          {error}
-        </Alert>
-      )}
+      {error && <Alert severity="error">{error}</Alert>}
 
       <Box
         sx={{
@@ -173,7 +187,15 @@ export default function Products() {
           gap: 2,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", flexGrow: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            flexWrap: "wrap",
+            flexGrow: 1,
+          }}
+        >
           <TextField
             placeholder="Rechercher par catégorie..."
             value={categorySearch}
@@ -215,24 +237,50 @@ export default function Products() {
           <Table>
             <TableHead sx={{ bgcolor: "#f9fafb" }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Nom</TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Catégorie</TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold", color: "#374151" }}>Prix (DH)</TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>Stock</TableCell>
-                <TableCell align="right" sx={{ fontWeight: "bold", color: "#374151" }}>Actions</TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  ID
+                </TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  Nom
+                </TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  Catégorie
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ fontWeight: "bold", color: "#374151" }}
+                >
+                  Prix (DH)
+                </TableCell>
+                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                  Stock
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ fontWeight: "bold", color: "#374151" }}
+                >
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((p) => {
-                  const stockVal = p.stock !== undefined && p.stock !== null ? Number(p.stock) : (p.quantiteStock !== undefined && p.quantiteStock !== null ? Number(p.quantiteStock) : 0);
+                  const stockVal =
+                    p.stock !== undefined && p.stock !== null
+                      ? Number(p.stock)
+                      : p.quantiteStock !== undefined &&
+                          p.quantiteStock !== null
+                        ? Number(p.quantiteStock)
+                        : 0;
                   return (
                     <TableRow key={p.id} hover>
                       <TableCell sx={{ fontFamily: "monospace" }}>
                         #{p.id}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: "medium" }}>{p.nom}</TableCell>
+                      <TableCell sx={{ fontWeight: "medium" }}>
+                        {p.nom}
+                      </TableCell>
                       <TableCell>{p.categorie}</TableCell>
                       <TableCell align="right">{p.prix}</TableCell>
                       <TableCell>
@@ -243,7 +291,14 @@ export default function Products() {
                             gap: 1,
                           }}
                         >
-                          <span style={{ minWidth: "30px", display: "inline-block" }}>{stockVal}</span>
+                          <span
+                            style={{
+                              minWidth: "30px",
+                              display: "inline-block",
+                            }}
+                          >
+                            {stockVal}
+                          </span>
                           {stockVal <= STOCK_FAIBLE && (
                             <Chip
                               label="Stock faible"
@@ -254,11 +309,21 @@ export default function Products() {
                         </Box>
                       </TableCell>
                       <TableCell align="right">
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            gap: 1,
+                          }}
+                        >
                           <Button
                             size="small"
                             onClick={() => setDetailsProduct(p)}
-                            sx={{ color: "#4f46e5", "&:hover": { bgcolor: "#f5f3ff" }, textTransform: "none" }}
+                            sx={{
+                              color: "#4f46e5",
+                              "&:hover": { bgcolor: "#f5f3ff" },
+                              textTransform: "none",
+                            }}
                           >
                             Voir
                           </Button>
@@ -266,7 +331,11 @@ export default function Products() {
                             <Button
                               size="small"
                               onClick={() => openEdit(p)}
-                              sx={{ color: "#d97706", "&:hover": { bgcolor: "#fef3c7" }, textTransform: "none" }}
+                              sx={{
+                                color: "#d97706",
+                                "&:hover": { bgcolor: "#fef3c7" },
+                                textTransform: "none",
+                              }}
                             >
                               Modifier
                             </Button>
@@ -276,7 +345,10 @@ export default function Products() {
                               size="small"
                               color="error"
                               onClick={() => handleDelete(p)}
-                              sx={{ "&:hover": { bgcolor: "#fef2f2" }, textTransform: "none" }}
+                              sx={{
+                                "&:hover": { bgcolor: "#fef2f2" },
+                                textTransform: "none",
+                              }}
                             >
                               Supprimer
                             </Button>
@@ -288,7 +360,11 @@ export default function Products() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.disabled" }}>
+                  <TableCell
+                    colSpan={6}
+                    align="center"
+                    sx={{ py: 6, color: "text.disabled" }}
+                  >
                     Aucun produit trouvé.
                   </TableCell>
                 </TableRow>

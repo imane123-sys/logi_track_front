@@ -31,6 +31,7 @@ export default function Clients2() {
             <th>Email</th>
             <th>Téléphone</th>
             <th>Ville</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -40,6 +41,10 @@ export default function Clients2() {
               <td>{c.email}</td>
               <td>{c.telephone}</td>
               <td>{c.ville}</td>
+              <td>
+                <button onClick={handleEdit(client)}>Modifier</button>
+                <button>Supprimer</button>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -1,34 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { clientApi } from "../../Api/ClientApi";
 
-export default function AjoutClient() {
-  const [clients, setClients] = useState([]);
-  const [erreur, setErreur] = useState(null);
-
+export default function () {
+  const [erreur, setErreur] = useState("");
   const [client, setClient] = useState({
+    id: "",
     nom: "",
     email: "",
     telephone: "",
     ville: "",
   });
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    clientApi
-      .create(client)
-      .then((data) => setClient(data))
-
-      .catch((err) => setErreur(err.message));
-  };
   useEffect(() => {
     clientApi
-      .getAll()
-      .then((data) => setClients(data))
-
-      .catch((err) => setErreur(err.message));
-  }, []);
+      .update(client.id, client)
+      .then((data) => setClient(data))
+      .catch((err) => setErreur(err));
+  });
+  const handleEdit = (clientChoisi) => {
+    setClient(clientChoisi);
+  };
 
   return (
-    <>
+    <div>
       <form action="" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="">Nom:</label>
@@ -82,6 +75,6 @@ export default function AjoutClient() {
           <input type="submit" />
         </div>
       </form>
-    </>
+    </div>
   );
 }

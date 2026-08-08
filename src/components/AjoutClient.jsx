@@ -4,7 +4,6 @@ import { clientApi } from "../../Api/ClientApi";
 export default function AjoutClient() {
   const [clients, setClients] = useState([]);
   const [erreur, setErreur] = useState(null);
-  const [change, setChange] = useState(null);
 
   const [client, setClient] = useState({
     nom: "",
@@ -12,17 +11,17 @@ export default function AjoutClient() {
     telephone: "",
     ville: "",
   });
-  const handleSybmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-  };
-
-  useEffect(() => {
     clientApi
-      .create()
-      .then((data) => setClients(data))
-      .catch((err) => setErreur(err.message));
-  }, []);
+      .create(client)
+      .then((data) => {
+        console.log(data);
 
+        setClients(data);
+      })
+      .catch((err) => setErreur(err.message));
+  };
   useEffect(() => {
     clientApi
       .getAll()
@@ -33,28 +32,49 @@ export default function AjoutClient() {
 
   return (
     <>
-      <form action="">
-        <label htmlFor="">Nom:</label>
-        <input
-          type="text"
-          name="nom"
-          value={client.nom}
-          onChange={(e) => setChange(e.target.value)}
-        />
-        <label htmlFor="">Email</label>
-        <input
-          type="email"
-          name="email"
-          value={client.email}
-          onChange={(e) => setChange(e.target.value)}
-        />
-        <label htmlFor="">Téléphone</label>
-        <input
-          type="tel"
-          value={client.telephone}
-          name="telephone"
-          onChange={(e) => setChange(e.target.value)}
-        />
+      <form action="" onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="">Nom:</label>
+          <input
+            type="text"
+            name="nom"
+            value={client.nom}
+            onChange={(e) => setClient({ ...client, nom: e.target.value })}
+          />
+        </div>
+        <div>
+          <label htmlFor="">Prenom:</label>
+          <input
+            type="text"
+            name="prenom"
+            value={client.prenom}
+            onChange={(e) => setClient({ ...client, prenom: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={client.email}
+            onChange={(e) => setClient({ ...client, email: e.target.value })}
+          />
+        </div>
+        <div>
+          <label htmlFor="">Téléphone</label>
+          <input
+            type="telephone"
+            value={client.telephone}
+            name="telephone"
+            onChange={(e) =>
+              setClient({ ...client, telephone: e.target.value })
+            }
+          />
+        </div>
+        <div>
+          <input type="submit" />
+        </div>
       </form>
     </>
   );

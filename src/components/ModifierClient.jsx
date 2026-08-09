@@ -1,23 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { clientApi } from "../../Api/ClientApi";
 
-export default function () {
+export default function ModifierClient({ client, setClient }) {
   const [erreur, setErreur] = useState("");
-  const [client, setClient] = useState({
-    id: "",
-    nom: "",
-    email: "",
-    telephone: "",
-    ville: "",
-  });
-  useEffect(() => {
+
+  const handleSubmit = () => {
     clientApi
       .update(client.id, client)
       .then((data) => setClient(data))
       .catch((err) => setErreur(err));
-  });
-  const handleEdit = (clientChoisi) => {
-    setClient(clientChoisi);
   };
 
   return (

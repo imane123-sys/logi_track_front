@@ -9,9 +9,17 @@ import {
   Dialog,
 } from "@mui/material";
 import { clientApi } from "../../Api/ClientApi";
+import ModifierClient from "./ModifierClient";
 
 export default function Clients2() {
   const [clients, setClients] = useState([]);
+  const [client, setClient] = useState({
+    id: "",
+    nom: "",
+    email: "",
+    telephone: "",
+    ville: "",
+  });
   const [erreur, setErreur] = useState(null);
   useEffect(() => {
     clientApi
@@ -19,7 +27,7 @@ export default function Clients2() {
       .then((data) => setClients(data))
 
       .catch((err) => setErreur(err.message));
-  });
+  }, []);
   //   console.log(data);
 
   return (
@@ -42,13 +50,14 @@ export default function Clients2() {
               <td>{c.telephone}</td>
               <td>{c.ville}</td>
               <td>
-                <button onClick={handleEdit(client)}>Modifier</button>
+                <button onClick={() => setClient(client)}>Modifier</button>
                 <button>Supprimer</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <ModifierClient client={client} setClient={setClient} />
     </>
   );
 }

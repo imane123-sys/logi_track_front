@@ -6,5 +6,7 @@ export const clientApi = {
   create: (data) => connexion.post("/api/clients", data),
   update: (id, data) => connexion.put(`/api/clients/${id}`, data),
   delete: (id) => connexion.delete(`/api/clients/${id}`),
-  getClientByNom: (nom) => connexion.get(`api/clients/getClientsNom/${nom}}`),
+  getClientByNom: (nom) => connexion.get(`api/clients/getClientsNom/${nom}`),
+  // getClientByNom: (nom) =>
+  // connexion.get(`/api/clients/getClientsNom?nom=${nom}`),
 };

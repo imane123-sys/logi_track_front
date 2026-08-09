@@ -41,6 +41,11 @@ export default function Clients2() {
       .catch((err) => setErreur(err.message));
   };
   const handleSearch = (nom) => {
+    if (nom === "") {
+      clientApi.getAll().then((data) => {
+        setClients(data);
+      });
+    }
     clientApi
       .getClientByNom(nom)
       .then((data) => {
@@ -57,7 +62,11 @@ export default function Clients2() {
         placeholder="rechercher par nom"
         name="nom"
         value={searchWord}
-        onChange={(e) => setSearchWord(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          setSearchWord(value);
+          handleSearch(value);
+        }}
       />
 
       <table>

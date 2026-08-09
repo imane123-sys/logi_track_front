@@ -17,14 +17,33 @@ export default function Clients2() {
   const [client, setClient] = useState();
   const [erreur, setErreur] = useState(null);
   const [showAjoutClient, setShowAjoutClient] = useState(false);
+  const [searchWord, setSearchWord] = useState('');
   useEffect(() => {
     clientApi
       .getAll()
-      .then((data) => setClients(data))
+      .then((data) => {
+        setClients(data);
+      })
 
       .catch((err) => setErreur(err.message));
-  }, [client]);
+  }, []);
   //   console.log(data);
+
+  const handleDelete = (id) => {
+    if (!Window.confirm("voulez vous supprimer ce message")) {
+      return;
+    }
+    clientApi
+      .delete(id)
+      .then(() =>
+        setClients((prevClienst) => prevClienst.filter((c) => c.id !== id)),
+      )
+      .catch((err) => setErreur(err.message));
+  };
+  const handleSearch = (nom) => {
+    clientApi.getClientByNom(nom)
+    .
+  };
 
   return (
     <>
@@ -52,14 +71,16 @@ export default function Clients2() {
               <td>{c.ville}</td>
               <td>
                 <button onClick={() => setClient(c)}>Modifier</button>
-                <button>Supprimer</button>
+                <button onClick={() => handleDelete(c.id)}>Supprimer</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
       {client && <ModifierClient client={client} setClient={setClient} />}
-      {showAjoutClient && <AjoutClient />}
+      {showAjoutClient && (
+        <AjoutClient setShowAjoutClient={setShowAjoutClient} />
+      )}
     </>
   );
 }

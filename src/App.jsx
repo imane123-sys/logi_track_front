@@ -16,7 +16,6 @@ function App() {
       {/* <ClientManagement />
       <Products />  */}
       <Clients2 />
-      <AjoutClient />
     </>
   );
 }

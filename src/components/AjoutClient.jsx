@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { clientApi } from "../../Api/ClientApi";
 
-export default function AjoutClient() {
-  const [clients, setClients] = useState([]);
+export default function AjoutClient({ setShowAjoutClient, setClients }) {
   const [erreur, setErreur] = useState(null);
 
   const [client, setClient] = useState({
@@ -15,17 +14,13 @@ export default function AjoutClient() {
     e.preventDefault();
     clientApi
       .create(client)
-      .then((data) => setClient(data))
+      .then((data) => {
+        setClients((precedentsClients) => [...precedentsClients, data]);
+        setShowAjoutClient(false);
+      })
 
       .catch((err) => setErreur(err.message));
   };
-  useEffect(() => {
-    clientApi
-      .getAll()
-      .then((data) => setClients(data))
-
-      .catch((err) => setErreur(err.message));
-  }, []);
 
   return (
     <>

@@ -17,7 +17,7 @@ export default function Clients2() {
   const [client, setClient] = useState();
   const [erreur, setErreur] = useState(null);
   const [showAjoutClient, setShowAjoutClient] = useState(false);
-  const [searchWord, setSearchWord] = useState('');
+  const [searchWord, setSearchWord] = useState("");
   useEffect(() => {
     clientApi
       .getAll()
@@ -41,13 +41,24 @@ export default function Clients2() {
       .catch((err) => setErreur(err.message));
   };
   const handleSearch = (nom) => {
-    clientApi.getClientByNom(nom)
-    .
+    clientApi
+      .getClientByNom(nom)
+      .then((data) => {
+        setClients(data);
+      })
+      .catch((err) => setErreur(err.message));
   };
 
   return (
     <>
       <button onClick={() => setShowAjoutClient(true)}>Ajouter</button>
+      <input
+        type="search"
+        placeholder="rechercher par nom"
+        name="nom"
+        value={searchWord}
+        onChange={(e) => setSearchWord(e.target.value)}
+      />
 
       <table>
         <thead>

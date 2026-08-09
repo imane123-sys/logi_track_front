@@ -4,10 +4,14 @@ import { clientApi } from "../../Api/ClientApi";
 export default function ModifierClient({ client, setClient }) {
   const [erreur, setErreur] = useState("");
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
     clientApi
       .update(client.id, client)
-      .then((data) => setClient(data))
+      .then((data) => {
+        setClient(data);
+        setClient(null);
+      })
       .catch((err) => setErreur(err));
   };
 

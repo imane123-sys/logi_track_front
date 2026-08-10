@@ -11,6 +11,7 @@ import {
 import { clientApi } from "../../Api/ClientApi";
 import ModifierClient from "./ModifierClient";
 import AjoutClient from "./AjoutClient";
+import ClientDetails from "./ClientDetails";
 
 export default function Clients2() {
   const [clients, setClients] = useState([]);
@@ -18,6 +19,10 @@ export default function Clients2() {
   const [erreur, setErreur] = useState(null);
   const [showAjoutClient, setShowAjoutClient] = useState(false);
   const [searchWord, setSearchWord] = useState("");
+  const [showClientDetail, setSHowClientDetail] = useState(false);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(5);
+  const [clientDetail, setClientDetail] = useState({});
   useEffect(() => {
     clientApi
       .getAll()
@@ -26,7 +31,7 @@ export default function Clients2() {
       })
 
       .catch((err) => setErreur(err.message));
-  }, []);
+  }, [clients]);
   //   console.log(data);
 
   const handleDelete = (id) => {
@@ -50,6 +55,23 @@ export default function Clients2() {
       .getClientByNom(nom)
       .then((data) => {
         setClients(data);
+      })
+      .catch((err) => setErreur(err.message));
+  };
+  useEffect(() => {
+    clientApi
+      .getClientsPaginated(page, size)
+      .then((data) => setClients(data))
+      .catch((err) => setErreur(err.message));
+  }, [page, size]);
+
+  const handleDetail = (id) => {
+    clientApi
+      .getById(id)
+
+      .then((data) => {
+        setSHowClientDetail(true);
+        setClientDetail(data);
       })
       .catch((err) => setErreur(err.message));
   };
@@ -92,6 +114,7 @@ export default function Clients2() {
               <td>
                 <button onClick={() => setClient(c)}>Modifier</button>
                 <button onClick={() => handleDelete(c.id)}>Supprimer</button>
+                <button onClick={() => handleDetail(c.id)}>Voir</button>
               </td>
             </tr>
           ))}
@@ -101,6 +124,14 @@ export default function Clients2() {
       {showAjoutClient && (
         <AjoutClient setShowAjoutClient={setShowAjoutClient} />
       )}
+      {showClientDetail && (
+        <ClientDetails
+          clientDetail={clientDetail}
+          setSHowClientDetail={setSHowClientDetail}
+        />
+      )}
+      <Button onClick={() => setPage(page - 1)}>Précédent</Button>
+      <Button onClick={() => setPage(page + 1)}>Suivant</Button>
     </>
   );
 }

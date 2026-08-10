@@ -13,24 +13,35 @@ import {
 import { productApi } from "../../Api/ProductApi";
 import { commandeApi } from "../../Api/CommandeApi";
 
-export default function AjouterProduitDialog({ open, commande, onClose, onSucces }) {
+export default function AjouterProduitDialog({
+  open,
+  commande,
+  onClose,
+  onSucces,
+}) {
   const [produits, setProduits] = useState([]);
   const [idProduit, setIdProduit] = useState("");
   const [quantite, setQuantite] = useState(1);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState(null);
 
+
+
   useEffect(() => {
-    if (open) {
-      setIdProduit("");
-      setQuantite(1);
-      setErreur(null);
-      productApi
-        .getAll()
-        .then((data) => setProduits(data || []))
-        .catch((err) => setErreur(err.message));
-    }
-  }, [open, commande]);
+    if (!open) return;
+    setIdProduit("");
+    setQuantite(1);
+    setErreur(null);
+    productApi
+      .getAll()
+      .then((data) => {
+        const list = data?.content ?? data;
+        setProduits(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => setErreur(err.message));
+  }, [open]);
+
+  
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,7 +64,9 @@ export default function AjouterProduitDialog({ open, commande, onClose, onSucces
         Ajouter un produit à la commande
       </DialogTitle>
       <form onSubmit={handleSubmit}>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+        >
           {erreur && <Alert severity="error">{erreur}</Alert>}
           <TextField
             select
@@ -80,16 +93,21 @@ export default function AjouterProduitDialog({ open, commande, onClose, onSucces
             type="number"
             value={quantite}
             onChange={(e) => setQuantite(e.target.value)}
-            inputProps={{ min: 1 }}
+            slotProps={{ htmlInput: { min: 1 } }}
             required
             fullWidth
           />
           <Typography variant="caption" color="text.secondary">
-            Commande #{commande?.id ?? "-"} — produit ajouté avec son prix et sa quantité.
+            Commande #{commande?.id ?? "-"} — produit ajouté avec son prix et sa
+            quantité.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>
+          <Button
+            onClick={onClose}
+            color="inherit"
+            sx={{ textTransform: "none" }}
+          >
             Annuler
           </Button>
           <Button

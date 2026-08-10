@@ -60,7 +60,12 @@ function Login() {
           p: 4,
         }}
       >
-        <Typography variant="h5" fontWeight={700} textAlign="center" sx={{ mb: 1 }}>
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          textAlign="center"
+          sx={{ mb: 1 }}
+        >
           Connexion
         </Typography>
 

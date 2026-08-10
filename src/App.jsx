@@ -1,23 +1,64 @@
 import { Route, Routes } from "react-router-dom";
-import Register from "./components/Register";
 import Login from "./components/Login";
-import Products from "./components/Products";
-import Clients2 from "./components/Clients2";
-import Orders from "./components/Orders";
-import OrderDetails from "./components/OrderDetails";
-import OrdersByClient from "./components/OrdersByClient";
+import Register from "./components/Register";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Clients2 />} />
-      <Route path="/clients" element={<Clients2 />} />
-      <Route path="/produits" element={<Products />} />
-      <Route path="/commandes" element={<Orders />} />
-      <Route path="/commandes/client/:clientId" element={<OrdersByClient />} />
-      <Route path="/commandes/:id" element={<OrderDetails />} />
       <Route path="/login" element={<Login />} />
+
       <Route path="/register" element={<Register />} />
+
+      <Route path="/acces-refuse" element={<AccessDenied />} />
+
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "MANAGER", "AGENT"]} />
+        }
+      >
+        <Route path="/" element={<Dashboard />} />
+
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Route>
+
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "MANAGER", "AGENT"]} />
+        }
+      >
+        <Route path="/clients" element={<Clients2 />} />
+      </Route>
+
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "MANAGER", "AGENT"]} />
+        }
+      >
+        <Route path="/produits" element={<Products />} />
+      </Route>
+
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "MANAGER", "AGENT"]} />
+        }
+      >
+        <Route path="/commandes" element={<Orders />} />
+
+        <Route
+          path="/commandes/client/:clientId"
+          element={<OrdersByClient />}
+        />
+
+        <Route path="/commandes/:id" element={<OrderDetails />} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+        <Route path="/users" element={<Users />} />
+      </Route>
+
+      {/* <Route element={<ProtectedRoute allowedRoles={["ADMIN", "MANAGER"]} />}>
+        <Route path="/statistiques" element={<Statistiques />} />
+      </Route> */}
     </Routes>
   );
 }

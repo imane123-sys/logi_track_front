@@ -3,6 +3,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useContext } from "react";
 import { AuthContext } from "./AuthContext";
+import { Box, Typography, TextField, Button, Alert } from "@mui/material";
 
 const loginSchema = yup.object({
   email: yup
@@ -39,67 +40,68 @@ function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto my-8 p-6 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
-      <h2 className="text-2xl font-bold text-gray-800 text-center">
-        Connexion
-      </h2>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "#f7f9fb",
+        p: 2,
+      }}
+    >
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 420,
+          bgcolor: "white",
+          borderRadius: 2,
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
+          p: 4,
+        }}
+      >
+        <Typography variant="h5" fontWeight={700} textAlign="center" sx={{ mb: 1 }}>
+          Connexion
+        </Typography>
 
-      {error && (
-        <p className="p-2 bg-red-50 text-red-600 text-sm rounded border border-red-200">
-          {error}
-        </p>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Email :
-          </label>
-          <input
-            type="email"
-            id="email"
-            {...register("email")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Mot de passe :
-          </label>
-          <input
-            type="password"
-            id="password"
-            {...register("password")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          {errors.password && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors disabled:opacity-50"
-          >
-            {isSubmitting ? "Connexion en cours..." : "Se connecter"}
-          </button>
-        </div>
-      </form>
-    </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Email"
+              type="email"
+              size="small"
+              fullWidth
+              error={!!errors.email}
+              helperText={errors.email?.message}
+              {...register("email")}
+            />
+            <TextField
+              label="Mot de passe"
+              type="password"
+              size="small"
+              fullWidth
+              error={!!errors.password}
+              helperText={errors.password?.message}
+              {...register("password")}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting}
+              sx={{ bgcolor: "#004ac6", "&:hover": { bgcolor: "#003ea8" } }}
+            >
+              {isSubmitting ? "Connexion en cours..." : "Se connecter"}
+            </Button>
+          </Box>
+        </form>
+      </Box>
+    </Box>
   );
 }
 

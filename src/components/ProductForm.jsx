@@ -8,8 +8,6 @@ import {
   TextField,
 } from "@mui/material";
 
-import { productApi } from "../../Api/ProductApi";
-
 const emptyForm = {
   nom: "",
   categorie: "",
@@ -45,17 +43,11 @@ export default function ProductForm({ open, product, onClose, onSave }) {
       prix: Number(form.prix),
       quantiteStock: Number(form.quantiteStock),
     });
-    productApi.create({
-      ...form,
-      prix: Number(form.prix),
-      quantiteStock: Number(form.quantiteStock),
-    });
-    console.log(form);
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700, color: "#191c1e" }}>
         {product ? "Modifier le produit" : "Ajouter un produit"}
       </DialogTitle>
       <form onSubmit={handleSubmit}>
@@ -79,7 +71,6 @@ export default function ProductForm({ open, product, onClose, onSave }) {
             fullWidth
             placeholder="ex: Électronique"
           />
-
           <TextField
             label="Prix (DH)"
             name="prix"
@@ -91,7 +82,7 @@ export default function ProductForm({ open, product, onClose, onSave }) {
             fullWidth
           />
           <TextField
-            label="quantiteStock (quantité)"
+            label="Quantité en stock"
             name="quantiteStock"
             type="number"
             value={form.quantiteStock}
@@ -102,10 +93,18 @@ export default function ProductForm({ open, product, onClose, onSave }) {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} color="inherit">
+          <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>
             Annuler
           </Button>
-          <Button type="submit" variant="contained" color="primary">
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{
+              bgcolor: "#004ac6",
+              "&:hover": { bgcolor: "#003ea8" },
+              textTransform: "none",
+            }}
+          >
             Enregistrer
           </Button>
         </DialogActions>

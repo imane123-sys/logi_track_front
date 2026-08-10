@@ -33,7 +33,15 @@ export default function ProductDetails({ open, product, onClose }) {
         {detailItem("Stock", `${product.stock} unités`)}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button
+          onClick={onClose}
+          sx={{
+            bgcolor: "#004ac6",
+            color: "#ffffff",
+            "&:hover": { bgcolor: "#003ea8" },
+            textTransform: "none",
+          }}
+        >
           Fermer
         </Button>
       </DialogActions>

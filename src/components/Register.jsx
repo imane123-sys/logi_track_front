@@ -5,6 +5,8 @@ import * as yup from "yup";
 import { register as registerApi } from "../../Api/AuthService";
 import { useContext } from "react";
 import { AuthContext } from "./AuthContext";
+import { Box, Typography, TextField, Button, Alert, MenuItem } from "@mui/material";
+
 const registerSchema = yup.object().shape({
   nom: yup
     .string()
@@ -80,127 +82,102 @@ function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto my-8 p-6 bg-white border border-gray-200 rounded-lg shadow-sm space-y-4">
-      <h2 className="text-2xl font-bold text-gray-800 text-center">
-        Inscription
-      </h2>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "#f7f9fb",
+        p: 2,
+      }}
+    >
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 460,
+          bgcolor: "white",
+          borderRadius: 2,
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
+          p: 4,
+        }}
+      >
+        <Typography variant="h5" fontWeight={700} textAlign="center" sx={{ mb: 1 }}>
+          Inscription
+        </Typography>
 
-      {apiError && (
-        <p className="p-2 bg-red-50 text-red-600 text-sm rounded border border-red-200">
-          {apiError}
-        </p>
-      )}
-      {successMessage && (
-        <p className="p-2 bg-green-50 text-green-600 text-sm rounded border border-green-200">
-          {successMessage}
-        </p>
-      )}
+        {apiError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {apiError}
+          </Alert>
+        )}
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {successMessage}
+          </Alert>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label
-            htmlFor="nom"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Nom
-          </label>
-          <input
-            id="nom"
-            type="text"
-            {...register("nom")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          {errors.nom && (
-            <p className="text-red-500 text-sm mt-1">{errors.nom.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="prenom"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Prénom
-          </label>
-          <input
-            id="prenom"
-            type="text"
-            {...register("prenom")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          {errors.prenom && (
-            <p className="text-red-500 text-sm mt-1">{errors.prenom.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            {...register("email")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Mot de passe
-          </label>
-          <input
-            id="password"
-            type="password"
-            {...register("password")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          {errors.password && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Rôle
-          </label>
-          <select
-            id="role"
-            {...register("role")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
-          >
-            <option value="AGENT">AGENT</option>
-            <option value="MANAGER">MANAGER</option>
-            <option value="ADMIN">ADMIN</option>
-          </select>
-          {errors.role && (
-            <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors disabled:opacity-50"
-        >
-          {isSubmitting ? "Inscription en cours..." : "S'inscrire"}
-        </button>
-      </form>
-    </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Nom"
+              size="small"
+              fullWidth
+              error={!!errors.nom}
+              helperText={errors.nom?.message}
+              {...register("nom")}
+            />
+            <TextField
+              label="Prénom"
+              size="small"
+              fullWidth
+              error={!!errors.prenom}
+              helperText={errors.prenom?.message}
+              {...register("prenom")}
+            />
+            <TextField
+              label="Email"
+              type="email"
+              size="small"
+              fullWidth
+              error={!!errors.email}
+              helperText={errors.email?.message}
+              {...register("email")}
+            />
+            <TextField
+              label="Mot de passe"
+              type="password"
+              size="small"
+              fullWidth
+              error={!!errors.password}
+              helperText={errors.password?.message}
+              {...register("password")}
+            />
+            <TextField
+              label="Rôle"
+              select
+              size="small"
+              fullWidth
+              error={!!errors.role}
+              helperText={errors.role?.message}
+              {...register("role")}
+            >
+              <MenuItem value="AGENT">AGENT</MenuItem>
+              <MenuItem value="MANAGER">MANAGER</MenuItem>
+              <MenuItem value="ADMIN">ADMIN</MenuItem>
+            </TextField>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting}
+              sx={{ bgcolor: "#004ac6", "&:hover": { bgcolor: "#003ea8" } }}
+            >
+              {isSubmitting ? "Inscription en cours..." : "S'inscrire"}
+            </Button>
+          </Box>
+        </form>
+      </Box>
+    </Box>
   );
 }
 

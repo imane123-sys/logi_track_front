@@ -1,6 +1,11 @@
-//Docker a ajouter , Swagger Backend
-import { useState, useEffect, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Chip,
+  Alert,
   Paper,
   Table,
   TableBody,
@@ -8,13 +13,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Button,
-  TextField,
-  CircularProgress,
-  Alert,
-  Chip,
-  Box,
-  Typography,
 } from "@mui/material";
 import { productApi } from "../../Api/ProductApi";
 import { AuthContext } from "./AuthContext";
@@ -26,34 +24,21 @@ const STOCK_FAIBLE = 10;
 export default function Products() {
   const { user } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [categorySearch, setCategorySearch] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [onlyLowStock, setOnlyLowStock] = useState(false);
-
-  const [detailsProduct, setDetailsProduct] = useState(null);
-  const [formOpen, setFormOpen] = useState(false);
+  const [erreur, setErreur] = useState(null);
+  const [searchCategorie, setSearchCategorie] = useState("");
+  const [prixMax, setPrixMax] = useState("");
+  const [stockFaible, setStockFaible] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await productApi.getAll();
-      setProducts(data || []);
-    } catch (err) {
-      setError(err?.message || "Impossible de charger les produits.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [showDetail, setShowDetail] = useState(false);
+  const [productDetail, setProductDetail] = useState({});
 
   useEffect(() => {
-    fetchProducts();
+    productApi
+      .getAll()
+      .then((data) => setProducts(data))
+      .catch((err) => setErreur(err.message));
   }, []);
-
 
   const hasRole = (role) => {
     if (!user || !user.role) return false;
@@ -69,195 +54,190 @@ export default function Products() {
   const canModify = hasRole("ADMIN") || hasRole("MANAGER");
   const canDelete = hasRole("ADMIN");
 
+  const handleDetail = (id) => {
+    productApi
+      .getById(id)
+      .then((data) => {
+        setProductDetail(data);
+        setShowDetail(true);
+      })
+      .catch((err) => setErreur(err.message));
+  };
+
+  const handleDelete = (id) => {
+    if (!window.confirm("voulez vous supprimer ce produit")) {
+      return;
+    }
+    productApi
+      .delete(id)
+      .then(() =>
+        setProducts((prevProducts) =>
+          prevProducts.filter((p) => p.id !== id),
+        ),
+      )
+      .catch((err) => setErreur(err.message));
+  };
+
+  const handleSave = (data) => {
+    if (editingProduct) {
+      productApi
+        .update(editingProduct.id, data)
+        .then((updated) => {
+          setProducts((prevProducts) =>
+            prevProducts.map((p) => (p.id === updated.id ? updated : p)),
+          );
+          setShowForm(false);
+          setEditingProduct(null);
+        })
+        .catch((err) => setErreur(err.message));
+    } else {
+      productApi
+        .create(data)
+        .then((created) => {
+          setProducts((prevProducts) => [...prevProducts, created]);
+          setShowForm(false);
+        })
+        .catch((err) => setErreur(err.message));
+    }
+  };
+
+  const getStock = (p) => Number(p.quantiteStock ?? p.stock ?? 0);
+
   const filteredProducts = (products || []).filter((p) => {
-    if (!p) return false;
-
-    const matchCategory = p.categorie
-      ? p.categorie.toLowerCase().includes(categorySearch.toLowerCase())
+    const matchCategorie = p.categorie
+      ? p.categorie.toLowerCase().includes(searchCategorie.toLowerCase())
       : true;
-
-    const price = p.prix !== undefined && p.prix !== null ? Number(p.prix) : 0;
-    const matchMaxPrice =
-      maxPrice === "" || isNaN(Number(maxPrice))
+    const prix = Number(p.prix);
+    const matchPrix =
+      prixMax === "" || isNaN(Number(prixMax))
         ? true
-        : price <= Number(maxPrice);
-
-    const stock =
-      p.stock !== undefined && p.stock !== null
-        ? Number(p.stock)
-        : p.quantiteStock !== undefined && p.quantiteStock !== null
-          ? Number(p.quantiteStock)
-          : 0;
-    const matchLowStock = onlyLowStock ? stock <= STOCK_FAIBLE : true;
-
-    return matchCategory && matchMaxPrice && matchLowStock;
+        : prix <= Number(prixMax);
+    const matchStock = stockFaible ? getStock(p) <= STOCK_FAIBLE : true;
+    return matchCategorie && matchPrix && matchStock;
   });
 
-  const handleSave = async (data) => {
-    try {
-      if (editingProduct) {
-        await productApi.update(editingProduct.id, data);
-      } else {
-        await productApi.create(data);
-      }
-      setFormOpen(false);
-      setEditingProduct(null);
-      fetchProducts();
-    } catch (err) {
-      setError(err?.message || "Impossible d'enregistrer le produit.");
-    }
-  };
-
-  const handleDelete = async (product) => {
-    const confirmed = window.confirm(
-      `Voulez-vous vraiment supprimer "${product.nom}" ?`,
-    );
-    if (!confirmed) return;
-    try {
-      await productApi.delete(product.id);
-      fetchProducts();
-    } catch (err) {
-      setError(err?.message || "Impossible de supprimer le produit.");
-    }
-  };
-
-  const openAdd = () => {
-    setEditingProduct(null);
-    setFormOpen(true);
-  };
-
-  const openEdit = (product) => {
-    setEditingProduct(product);
-    setFormOpen(true);
-  };
-
   return (
-    <Box
-      sx={{
-        maxWidth: 1100,
-        mx: "auto",
-        p: 3,
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-      }}
-    >
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f7f9fb", p: 3 }}>
       <Box
         sx={{
+          maxWidth: 1440,
+          mx: "auto",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderBottom: 1,
-          borderColor: "divider",
-          pb: 2,
-        }}
-      >
-        <Box>
-          <Typography variant="h5" fontWeight="bold">
-            Gestion des Produits
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Consultez, ajoutez, modifiez et supprimez vos produits.
-          </Typography>
-        </Box>
-        {canModify && (
-          <Button
-            variant="contained"
-            onClick={openAdd}
-            sx={{
-              bgcolor: "#4f46e5",
-              "&:hover": { bgcolor: "#4338ca" },
-              textTransform: "none",
-              borderRadius: 2,
-            }}
-          >
-            + Nouveau Produit
-          </Button>
-        )}
-      </Box>
-
-      {error && <Alert severity="error">{error}</Alert>}
-
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 2,
+          flexDirection: "column",
+          gap: 3,
         }}
       >
         <Box
           sx={{
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
             gap: 2,
             flexWrap: "wrap",
-            flexGrow: 1,
+          }}
+        >
+          <Box>
+            <Typography variant="h4" fontWeight={700} sx={{ color: "#191c1e" }}>
+              Produits
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#434655" }}>
+              Consultez, ajoutez, modifiez et supprimez vos produits.
+            </Typography>
+          </Box>
+          {canModify && (
+            <Button
+              variant="contained"
+              onClick={() => {
+                setEditingProduct(null);
+                setShowForm(true);
+              }}
+              sx={{
+                bgcolor: "#004ac6",
+                "&:hover": { bgcolor: "#003ea8" },
+                textTransform: "none",
+                borderRadius: 2,
+              }}
+            >
+              + Ajouter un produit
+            </Button>
+          )}
+        </Box>
+
+        {erreur && <Alert severity="error">{erreur}</Alert>}
+
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 2,
+            alignItems: "center",
           }}
         >
           <TextField
             placeholder="Rechercher par catégorie..."
-            value={categorySearch}
-            onChange={(e) => setCategorySearch(e.target.value)}
+            value={searchCategorie}
+            onChange={(e) => setSearchCategorie(e.target.value)}
             size="small"
             sx={{ minWidth: 200 }}
           />
           <TextField
             placeholder="Prix max (DH)"
             type="number"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
+            value={prixMax}
+            onChange={(e) => setPrixMax(e.target.value)}
             size="small"
             sx={{ width: 150 }}
           />
           <Button
-            variant={onlyLowStock ? "contained" : "outlined"}
-            color={onlyLowStock ? "error" : "primary"}
-            onClick={() => setOnlyLowStock((prev) => !prev)}
+            variant={stockFaible ? "contained" : "outlined"}
+            color="error"
+            onClick={() => setStockFaible((prev) => !prev)}
             size="small"
             sx={{ textTransform: "none", height: 40 }}
           >
-            {onlyLowStock ? "Afficher tout le stock" : "Stock faible"}
+            {stockFaible ? "Afficher tout le stock" : "Stock faible"}
           </Button>
+          <Chip
+            label={`Total: ${filteredProducts.length}`}
+            sx={{ fontWeight: "bold", bgcolor: "#e0e3e5", color: "#191c1e" }}
+          />
         </Box>
-        <Chip
-          label={`Total: ${filteredProducts.length}`}
-          sx={{ fontWeight: "bold", bgcolor: "#f3f4f6", color: "#4b5563" }}
-        />
-      </Box>
 
-      {/* Table Section */}
-      <TableContainer component={Paper} variant="outlined">
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
+        {/* Tableau */}
+        <TableContainer
+          component={Paper}
+          sx={{
+            border: "1px solid",
+            borderColor: "#c3c6d7",
+            borderRadius: 2,
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
+            overflow: "hidden",
+          }}
+        >
           <Table>
-            <TableHead sx={{ bgcolor: "#f9fafb" }}>
+            <TableHead sx={{ bgcolor: "#f2f4f6" }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "#434655" }}>
                   ID
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "#434655" }}>
                   Nom
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "#434655" }}>
                   Catégorie
                 </TableCell>
                 <TableCell
                   align="right"
-                  sx={{ fontWeight: "bold", color: "#374151" }}
+                  sx={{ fontWeight: "bold", color: "#434655" }}
                 >
                   Prix (DH)
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#374151" }}>
+                <TableCell sx={{ fontWeight: "bold", color: "#434655" }}>
                   Stock
                 </TableCell>
                 <TableCell
                   align="right"
-                  sx={{ fontWeight: "bold", color: "#374151" }}
+                  sx={{ fontWeight: "bold", color: "#434655" }}
                 >
                   Actions
                 </TableCell>
@@ -265,105 +245,81 @@ export default function Products() {
             </TableHead>
             <TableBody>
               {filteredProducts.length > 0 ? (
-                filteredProducts.map((p) => {
-                  const stockVal =
-                    p.stock !== undefined && p.stock !== null
-                      ? Number(p.stock)
-                      : p.quantiteStock !== undefined &&
-                          p.quantiteStock !== null
-                        ? Number(p.quantiteStock)
-                        : 0;
-                  return (
-                    <TableRow key={p.id} hover>
-                      <TableCell sx={{ fontFamily: "monospace" }}>
-                        #{p.id}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: "medium" }}>
-                        {p.nom}
-                      </TableCell>
-                      <TableCell>{p.categorie}</TableCell>
-                      <TableCell align="right">{p.prix}</TableCell>
-                      <TableCell>
-                        <Box
+                filteredProducts.map((p) => (
+                  <TableRow key={p.id} hover>
+                    <TableCell sx={{ fontFamily: "monospace" }}>
+                      #{p.id}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: "medium", color: "#191c1e" }}>
+                      {p.nom}
+                    </TableCell>
+                    <TableCell sx={{ color: "#434655" }}>
+                      {p.categorie}
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: "#191c1e" }}>
+                      {p.prix}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <span>{getStock(p)}</span>
+                        {getStock(p) <= STOCK_FAIBLE && (
+                          <Chip label="Stock faible" size="small" color="error" />
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          gap: 1,
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          onClick={() => handleDetail(p.id)}
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
+                            color: "#004ac6",
+                            textTransform: "none",
                           }}
                         >
-                          <span
-                            style={{
-                              minWidth: "30px",
-                              display: "inline-block",
-                            }}
-                          >
-                            {stockVal}
-                          </span>
-                          {stockVal <= STOCK_FAIBLE && (
-                            <Chip
-                              label="Stock faible"
-                              size="small"
-                              color="error"
-                            />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            gap: 1,
-                          }}
-                        >
+                          Voir
+                        </Button>
+                        {canModify && (
                           <Button
                             size="small"
-                            onClick={() => setDetailsProduct(p)}
+                            onClick={() => {
+                              setEditingProduct(p);
+                              setShowForm(true);
+                            }}
                             sx={{
-                              color: "#4f46e5",
-                              "&:hover": { bgcolor: "#f5f3ff" },
+                              color: "#d97706",
                               textTransform: "none",
                             }}
                           >
-                            Voir
+                            Modifier
                           </Button>
-                          {canModify && (
-                            <Button
-                              size="small"
-                              onClick={() => openEdit(p)}
-                              sx={{
-                                color: "#d97706",
-                                "&:hover": { bgcolor: "#fef3c7" },
-                                textTransform: "none",
-                              }}
-                            >
-                              Modifier
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              size="small"
-                              color="error"
-                              onClick={() => handleDelete(p)}
-                              sx={{
-                                "&:hover": { bgcolor: "#fef2f2" },
-                                textTransform: "none",
-                              }}
-                            >
-                              Supprimer
-                            </Button>
-                          )}
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                        )}
+                        {canDelete && (
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(p.id)}
+                            sx={{ textTransform: "none" }}
+                          >
+                            Supprimer
+                          </Button>
+                        )}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
                   <TableCell
                     colSpan={6}
                     align="center"
-                    sx={{ py: 6, color: "text.disabled" }}
+                    sx={{ py: 6, color: "#737686" }}
                   >
                     Aucun produit trouvé.
                   </TableCell>
@@ -371,24 +327,24 @@ export default function Products() {
               )}
             </TableBody>
           </Table>
-        )}
-      </TableContainer>
+        </TableContainer>
 
-      <ProductDetails
-        open={!!detailsProduct}
-        product={detailsProduct}
-        onClose={() => setDetailsProduct(null)}
-      />
+        <ProductDetails
+          open={showDetail}
+          product={productDetail}
+          onClose={() => setShowDetail(false)}
+        />
 
-      <ProductForm
-        open={formOpen}
-        product={editingProduct}
-        onClose={() => {
-          setFormOpen(false);
-          setEditingProduct(null);
-        }}
-        onSave={handleSave}
-      />
+        <ProductForm
+          open={showForm}
+          product={editingProduct}
+          onClose={() => {
+            setShowForm(false);
+            setEditingProduct(null);
+          }}
+          onSave={handleSave}
+        />
+      </Box>
     </Box>
   );
 }

@@ -40,7 +40,9 @@ export default function Clients2() {
       clientApi.getAll().then((data) => {
         setClients(data);
       });
+      return;
     }
+
     clientApi
       .getClientByNom(nom)
       .then((data) => {
@@ -51,7 +53,7 @@ export default function Clients2() {
   useEffect(() => {
     clientApi
       .getClientsPaginated(page, size)
-      .then((data) => setClients(data))
+      .then((data) => setClients(data.content))
       .catch((err) => setErreur(err.message));
   }, [page, size]);
 
@@ -69,7 +71,6 @@ export default function Clients2() {
   return (
     <div className="min-h-screen bg-background text-on-surface font-body-md text-body-md p-md md:p-lg">
       <div className="max-w-[1440px] mx-auto w-full space-y-lg">
-        {/* Bouton Ajouter + Recherche */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-md">
           <button
             onClick={() => setShowAjoutClient(true)}
@@ -114,7 +115,6 @@ export default function Clients2() {
           </div>
         )}
 
-        {/* Tableau */}
         <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -195,7 +195,6 @@ export default function Clients2() {
           />
         )}
 
-        {/* Pagination */}
         <div className="flex items-center gap-sm justify-end">
           <button
             onClick={() => setPage(page - 1)}

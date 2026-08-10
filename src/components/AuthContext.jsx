@@ -18,23 +18,26 @@ export function AuthProvider({ children }) {
   const extractToken = (response) => {
     if (typeof response === "string") return response;
     if (typeof response === "object" && response !== null) {
-      return response.token
-        || response.accessToken
-        || response.access_token
-        || response.data?.token
-        || response.data?.accessToken
-        || response.data?.access_token
-        || null;
+      return (
+        response.token ||
+        response.accessToken ||
+        response.access_token ||
+        response.data?.token ||
+        response.data?.accessToken ||
+        response.data?.access_token ||
+        null
+      );
     }
     return null;
   };
 
   const extractRole = (decoded, response) => {
-    const fromJwt = decoded.authorities
-      || decoded.authority
-      || decoded.role
-      || decoded.roles
-      || decoded.scope;
+    const fromJwt =
+      decoded.authorities ||
+      decoded.authority ||
+      decoded.role ||
+      decoded.roles ||
+      decoded.scope;
     if (fromJwt) return fromJwt;
 
     if (typeof response === "object" && response !== null) {
@@ -60,7 +63,6 @@ export function AuthProvider({ children }) {
       };
 
       localStorage.setItem("token", jwtToken);
-      localStorage.setItem("user", JSON.stringify(userData));
 
       setToken(jwtToken);
       setUser(userData);

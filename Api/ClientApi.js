@@ -7,11 +7,11 @@ export const clientApi = {
   update: (id, data) => connexion.put(`/api/clients/${id}`, data),
   delete: (id) => connexion.delete(`/api/clients/${id}`),
   getClientByNom: (nom) => connexion.get(`api/clients/getClientsNom/${nom}`),
-  
+
   // getClientByNom: (nom) =>
   // connexion.get(`/api/clients/getClientsNom?nom=${nom}`),
   getClientsPaginated: (page = 0, size = 5) =>
-    connexion.get("/api/clients", {
+    connexion.get("/api/clients/clientsPagines", {
       params: {
         page,
         size,
